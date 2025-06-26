@@ -1404,7 +1404,17 @@ void CTFBotMainAction::FireWeaponAtEnemy( CTFBot *me )
 					if ( trace.m_pEnt == threat->GetEntity() )
 					{
 						// we're on target - fire!
-						me->PressFireButton();
+						if ( myWeapon->IsWeapon( TF_WEAPON_SNIPERRIFLE_CLASSIC ) )
+						{
+							if ( me->m_Shared.InCond( TF_COND_AIMING ) )
+							{
+								me->ReleaseFireButton();
+							}
+							else
+							{
+								me->PressFireButton();
+							}
+						}
 					}
 				}
 			}

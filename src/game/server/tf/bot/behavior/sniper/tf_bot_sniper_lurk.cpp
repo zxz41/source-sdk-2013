@@ -122,12 +122,15 @@ ActionResult< CTFBot >	CTFBotSniperLurk::Update( CTFBot *me, float interval )
 	}
 
 	bool isSightingRifle = false;
+	bool haveThreat = false;
 
 	if ( threat && 
 		 threat->GetTimeSinceLastSeen() < tf_bot_sniper_target_linger_duration.GetFloat() &&
 		 me->IsLineOfFireClear( threat->GetEntity() ) )
 	{
 		// we see something...
+		haveThreat = true;
+
 		if ( m_isOpportunistic )
 		{
 			// switch to our sniper rifle
@@ -190,18 +193,51 @@ ActionResult< CTFBot >	CTFBotSniperLurk::Update( CTFBot *me, float interval )
 		m_boredTimer.Reset();
 	}
 
+	CTFWeaponBase *myGun = (CTFWeaponBase *)me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY );
+	bool isClassicRifle = false;
+	bool isCompoundBow = false;
+
+	if ( myGun )
+	{
+		isClassicRifle = myGun->IsWeapon( TF_WEAPON_SNIPERRIFLE_CLASSIC );
+		isCompoundBow = myGun->IsWeapon( TF_WEAPON_COMPOUND_BOW );
+	}
+
 	if ( isSightingRifle )
 	{
 		// switch to our sniper rifle
-		CTFWeaponBase *myGun = (CTFWeaponBase *)me->Weapon_GetSlot( TF_WPN_TYPE_PRIMARY );
 		if ( myGun )
 		{
 			me->Weapon_Switch( myGun );
 
-			if ( !me->m_Shared.InCond( TF_COND_ZOOMED ) && !myGun->IsWeapon( TF_WEAPON_COMPOUND_BOW ) )
+			if ( !me->m_Shared.InCond( TF_COND_ZOOMED ) )
 			{
-				// zoom in and stand still
-				me->PressAltFireButton();
+				if ( isCompoundBow )
+				{
+					// No zooming
+				}
+				else if ( isClassicRifle )
+				{
+					if ( haveThreat )
+					{
+						// zoom in and stand still
+						me->PressAltFireButton();
+					}
+				}
+				else
+				{
+					// zoom in and stand still
+					me->PressAltFireButton();
+				}
+			}
+
+			if ( !me->m_Shared.InCond( TF_COND_AIMING ) )
+			{
+				if ( isClassicRifle )
+				{
+					// start charging the classic (hold)
+					me->PressFireButton( FLT_MAX );
+				}
 			}
 		}
 	}
@@ -220,6 +256,21 @@ ActionResult< CTFBot >	CTFBotSniperLurk::Update( CTFBot *me, float interval )
 		
 		if ( me->m_Shared.InCond( TF_COND_ZOOMED ) )
 		{
+			me->PressAltFireButton();
+		}
+
+		// TODO should we cheat this and just not fire somehow?
+		if ( isClassicRifle && me->m_Shared.InCond( TF_COND_AIMING ) )
+		{
+			me->ReleaseFireButton();
+		}
+	}
+
+	if ( !haveThreat )
+	{
+		if ( isClassicRifle && me->m_Shared.InCond( TF_COND_ZOOMED ) )
+		{
+			// no threat to scope in on
 			me->PressAltFireButton();
 		}
 	}
