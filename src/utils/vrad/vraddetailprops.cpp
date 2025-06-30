@@ -753,26 +753,28 @@ void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &o
 		// Mode 2: Orangebox (and earlier)
 		// Here, indirect lighting simply took the reflectivity and did not factor in falloff or dot.
 		// This created an unnaturally bright result, but this is what TF2 shipped with on release.
+		Vector vReflectivity = dtexdata[pTex->texdata].reflectivity;
 		switch ( g_nIndirectPropLightingMode )
 		{
 			case 0:
-			{
-				VectorMultiply( lightmapColor, dot * dtexdata[pTex->texdata].reflectivity, lightmapColor );
+				// Dot product.
+				vReflectivity *= dot;
 				break;
-			}
+
 			case 1:
-			{
-				float invLengthSqr = 1.0f / ( 1.0f + ( ( vEnd - position ) * surfEnum.m_HitFrac / 128.0 ).LengthSqr() );
-				VectorMultiply( lightmapColor, invLengthSqr * dtexdata[pTex->texdata].reflectivity, lightmapColor );
+				// Inverse square law.
+				vReflectivity *= ( 1.0f / ( 1.0f + ( ( vEnd - position ) * surfEnum.m_HitFrac / 128.0 ).LengthSqr() ) );
 				break;
-			}
+
 			case 2:
-			{
-				VectorMultiply( lightmapColor, dtexdata[pTex->texdata].reflectivity, lightmapColor );
+				// No modifications.
 				break;
-			}
+
+			default:
+				Assert( 0 );
 		}
 
+		VectorMultiply( lightmapColor, vReflectivity, lightmapColor );
 		VectorAdd( outColor, lightmapColor, outColor );
 	}
 
