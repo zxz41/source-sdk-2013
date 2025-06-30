@@ -756,18 +756,15 @@ void ComputeIndirectLightingAtPoint( Vector &position, Vector &normal, Vector &o
 		Vector vReflectivity = dtexdata[pTex->texdata].reflectivity;
 		switch ( g_nIndirectPropLightingMode )
 		{
-			case 0:
-				// Dot product.
+			case LIGHTMODE_INDIRECT_DOT:
 				vReflectivity *= dot;
 				break;
 
-			case 1:
-				// Inverse square law.
+			case LIGHTMODE_INDIRECT_INVSQRLAW:
 				vReflectivity *= ( 1.0f / ( 1.0f + ( ( vEnd - position ) * surfEnum.m_HitFrac / 128.0 ).LengthSqr() ) );
 				break;
 
-			case 2:
-				// No modifications.
+			case LIGHTMODE_INDIRECT_PURE:
 				break;
 
 			default:
